@@ -59,7 +59,6 @@ const MOCK_COURSES = [
 const NAV_TITLES = {
   courses: 'My Courses',
   timeline: 'Timeline',
-  upload: 'Upload Syllabus',
   settings: 'Settings',
 }
 
@@ -209,7 +208,6 @@ export default function Dashboard() {
           {[
             { id: 'courses',  label: 'Courses',  icon: '▦' },
             { id: 'timeline', label: 'Timeline', icon: '📅' },
-            { id: 'upload',   label: 'Upload',   icon: '↑' },
             { id: 'settings', label: 'Settings', icon: '⚙' },
           ].map(item => (
             <button
@@ -237,13 +235,6 @@ export default function Dashboard() {
       <div className="main-content">
         <div className="topbar">
           <h1>{NAV_TITLES[activeNav]}</h1>
-          <button
-            className="add-btn"
-            style={{ background: theme.accent, color: theme.accentText }}
-            onClick={() => setActiveNav('upload')}
-            >
-            + Add Course
-        </button>
         </div>
 
         <div className="content-area">
