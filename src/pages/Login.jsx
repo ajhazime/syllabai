@@ -1,4 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { auth, googleProvider } from '../firebase'
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  updateProfile
+} from 'firebase/auth'
 import './Login.css'
 
 const PARTICLE_COUNT = 200
@@ -22,10 +30,16 @@ function makeParticles() {
 
 export default function Login() {
   const [tab, setTab] = useState('signin')
+  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const canvasRef = useRef(null)
   const mouseRef = useRef({ x: -999, y: -999 })
   const particlesRef = useRef([])
   const frameRef = useRef(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -46,7 +60,6 @@ export default function Login() {
 
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-
       const particles = particlesRef.current
       const mouse = mouseRef.current
 
@@ -75,7 +88,6 @@ export default function Login() {
 
         p.x += p.vx
         p.y += p.vy
-
         if (p.x < 0) { p.x = 0; p.vx *= -1 }
         if (p.x > canvas.width) { p.x = canvas.width; p.vx *= -1 }
         if (p.y < 0) { p.y = 0; p.vy *= -1 }
@@ -87,7 +99,6 @@ export default function Login() {
           const dx = particles[i].x - particles[j].x
           const dy = particles[i].y - particles[j].y
           const dist = Math.sqrt(dx * dx + dy * dy)
-
           if (dist < CONNECTION_DISTANCE) {
             const opacity = (1 - dist / CONNECTION_DISTANCE) * 0.5
             ctx.beginPath()
@@ -119,6 +130,50 @@ export default function Login() {
     }
   }, [])
 
+  // ✅ Auth functions are OUTSIDE useEffect
+  const handleSubmit = async () => {
+    setError('')
+    setLoading(true)
+    try {
+      if (tab === 'signin') {
+        await signInWithEmailAndPassword(auth, email, password)
+      } else {
+        const result = await createUserWithEmailAndPassword(auth, email, password)
+        await updateProfile(result.user, { displayName: username })
+      }
+      navigate('/dashboard')
+    } catch (err) {
+      setError(friendlyError(err.code))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGoogle = async () => {
+    setError('')
+    setLoading(true)
+    try {
+      await signInWithPopup(auth, googleProvider)
+      navigate('/dashboard')
+    } catch (err) {
+      setError(friendlyError(err.code))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function friendlyError(code) {
+    switch (code) {
+      case 'auth/invalid-email':        return 'Invalid email address.'
+      case 'auth/user-not-found':       return 'No account found with this email.'
+      case 'auth/wrong-password':       return 'Incorrect password.'
+      case 'auth/email-already-in-use': return 'An account with this email already exists.'
+      case 'auth/weak-password':        return 'Password should be at least 6 characters.'
+      case 'auth/popup-closed-by-user': return 'Google sign-in was cancelled.'
+      default:                          return 'Something went wrong. Please try again.'
+    }
+  }
+
   return (
     <div className="login-page">
       <canvas ref={canvasRef} className="particle-canvas" />
@@ -142,27 +197,44 @@ export default function Login() {
         {tab === 'signup' && (
           <div className="field">
             <label>Username</label>
-            <input type="text" placeholder="yourname" />
+            <input
+              type="text"
+              placeholder="yourname"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+            />
           </div>
         )}
 
         <div className="field">
           <label>Email</label>
-          <input type="email" placeholder="you@university.edu" />
+          <input
+            type="email"
+            placeholder="you@university.edu"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+          />
         </div>
 
         <div className="field">
           <label>Password</label>
-          <input type="password" placeholder="••••••••" />
+          <input
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+          />
         </div>
 
-        <button className="btn-primary">
-          {tab === 'signin' ? 'Sign in' : 'Create account'}
+        {error && <p className="auth-error">{error}</p>}
+
+        <button className="btn-primary" onClick={handleSubmit} disabled={loading}>
+          {loading ? 'Please wait...' : tab === 'signin' ? 'Sign in' : 'Create account'}
         </button>
 
         <div className="divider">or</div>
 
-        <button className="btn-google">
+        <button className="btn-google" onClick={handleGoogle} disabled={loading}>
           <svg width="16" height="16" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>

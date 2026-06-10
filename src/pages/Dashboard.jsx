@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
+import { auth } from '../firebase'
+import { onAuthStateChanged } from 'firebase/auth'
 import Settings from '../components/Settings'
 import CourseCard from '../components/CourseCard'
 import UploadZone from '../components/UploadZone'
 import CourseModal from '../components/CourseModal'
 import Timeline from '../components/Timeline'
+
 import './Dashboard.css'
 
 const PARTICLE_COUNT = 120
@@ -66,9 +69,14 @@ export default function Dashboard() {
     const [courses, setCourses] = useState(MOCK_COURSES)
     const [activeNav, setActiveNav] = useState('courses')
     const [selectedCourse, setSelectedCourse] = useState(null)
+    const [user, setUser] = useState(null)
     const { theme } = useTheme()
     const themeRef = useRef(theme)
         useEffect(() => { themeRef.current = theme }, [theme])
+        useEffect(() => {
+            const unsub = onAuthStateChanged(auth, setUser)
+    return unsub
+    }, [])
     const canvasRef = useRef(null)    
     const mouseRef = useRef({ x: -999, y: -999 })
     const particlesRef = useRef([])
@@ -208,7 +216,6 @@ export default function Dashboard() {
           {[
             { id: 'courses',  label: 'Courses',  icon: '▦' },
             { id: 'timeline', label: 'Timeline', icon: '📅' },
-            { id: 'settings', label: 'Settings', icon: '⚙' },
           ].map(item => (
             <button
               key={item.id}
@@ -222,13 +229,13 @@ export default function Dashboard() {
         </nav>
 
         <div className="sidebar-bottom">
-          <div className="user-pill">
-            <div className="avatar">AJ</div>
-            <div>
-              <div className="user-name">AJ Hazime</div>
-              <div className="user-email">aj@uni.edu</div>
-            </div>
-          </div>
+            <button
+                className={`nav-item ${activeNav === 'settings' ? 'active' : ''}`}
+                onClick={() => setActiveNav('settings')}
+            >
+                <span className="nav-icon">⚙</span>
+                Settings
+            </button>
         </div>
       </div>
 
