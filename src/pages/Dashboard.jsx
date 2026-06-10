@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 import { auth } from '../firebase'
 import { onAuthStateChanged } from 'firebase/auth'
+import { extractSyllabus } from '../gemini'
 import Settings from '../components/Settings'
 import CourseCard from '../components/CourseCard'
 import UploadZone from '../components/UploadZone'
@@ -172,30 +173,30 @@ export default function Dashboard() {
     }
   }, [])
 
-  const handleFile = (file) => {
-    const tempId = Date.now()
-    const color = COLORS[courses.length % COLORS.length]
+    const handleFile = async (file) => {
+        const tempId = Date.now()
+        const color = COLORS[courses.length % COLORS.length]
 
-    setCourses(prev => [...prev, { id: tempId, loading: true, color }])
+        // Step 1 — add skeleton card instantly
+        setCourses(prev => [...prev, { id: tempId, loading: true, color }])
 
-    setTimeout(() => {
-      const mockExtracted = {
-        id: tempId,
-        loading: false,
-        color,
-        courseName: 'New Course',
-        courseCode: 'COURSE 101',
-        instructor: 'Prof. Example',
-        instructorEmail: 'prof@university.edu',
-        officeHours: ['Tue/Thu 3–5pm'],
-        upcomingAssignments: [
-          { name: 'HW1', due: 'Oct 20', type: 'hw' },
-          { name: 'Midterm', due: 'Nov 5', type: 'exam' },
-        ],
-      }
-      setCourses(prev => prev.map(c => c.id === tempId ? mockExtracted : c))
-    }, 2500)
-  }
+        try {
+            // Step 2 — call real Gemini API
+            const extracted = await extractSyllabus(file)
+
+            // Step 3 — swap skeleton for real card
+            setCourses(prev => prev.map(c => c.id === tempId ? {
+            ...extracted,
+            id: tempId,
+            loading: false,
+            color,
+            } : c))
+        } catch (err) {
+            console.error('Extraction failed:', err)
+            // Remove skeleton card on error
+            setCourses(prev => prev.filter(c => c.id !== tempId))
+        }
+    }
 
   return (
     <div className="dashboard" style={{ background: theme.gradient }}>
