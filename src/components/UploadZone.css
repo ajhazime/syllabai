@@ -1,0 +1,31 @@
+.upload-zone {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1.5px dashed rgba(255, 255, 255, 0.35);
+    border-radius: 14px;
+    padding: 2rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    min-height: 160px;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.upload-zone:hover,
+.upload-zone.drag {
+    border-color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.upload-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.upload-sub {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+}
