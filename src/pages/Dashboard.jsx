@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import CourseCard from '../components/CourseCard'
 import UploadZone from '../components/UploadZone'
 import CourseModal from '../components/CourseModal'
+import Timeline from '../components/Timeline'
 import './Dashboard.css'
 
 const PARTICLE_COUNT = 120
@@ -52,6 +53,13 @@ const MOCK_COURSES = [
     ],
   },
 ]
+
+const NAV_TITLES = {
+  courses: 'My Courses',
+  timeline: 'Timeline',
+  upload: 'Upload Syllabus',
+  settings: 'Settings',
+}
 
 export default function Dashboard() {
   const [courses, setCourses] = useState(MOCK_COURSES)
@@ -152,36 +160,30 @@ export default function Dashboard() {
     }
   }, [])
 
-  const COLORS = ['#378ADD', '#1D9E75', '#7F77DD', '#D85A30', '#BA7517']
+  const handleFile = (file) => {
+    const tempId = Date.now()
+    const color = COLORS[courses.length % COLORS.length]
 
-    const handleFile = (file) => {
-        const tempId = Date.now()
-        const color = COLORS[courses.length % COLORS.length]
+    setCourses(prev => [...prev, { id: tempId, loading: true, color }])
 
-        // Step 1 — add skeleton card instantly
-        setCourses(prev => [...prev, { id: tempId, loading: true, color }])
-
-        // Step 2 — simulate AI extraction (replace with real Gemini call later)
-        setTimeout(() => {
-            const mockExtracted = {
-            id: tempId,
-            loading: false,
-            color,
-            courseName: 'New Course',
-            courseCode: 'COURSE 101',
-            instructor: 'Prof. Example',
-            instructorEmail: 'prof@university.edu',
-            officeHours: ['Tue/Thu 3–5pm'],
-            upcomingAssignments: [
-                { name: 'HW1', due: 'Oct 20', type: 'hw' },
-                { name: 'Midterm', due: 'Nov 5', type: 'exam' },
-            ],
-            }
-
-            // Step 3 — swap skeleton out for real card
-            setCourses(prev => prev.map(c => c.id === tempId ? mockExtracted : c))
-        }, 2500)
-    }
+    setTimeout(() => {
+      const mockExtracted = {
+        id: tempId,
+        loading: false,
+        color,
+        courseName: 'New Course',
+        courseCode: 'COURSE 101',
+        instructor: 'Prof. Example',
+        instructorEmail: 'prof@university.edu',
+        officeHours: ['Tue/Thu 3–5pm'],
+        upcomingAssignments: [
+          { name: 'HW1', due: 'Oct 20', type: 'hw' },
+          { name: 'Midterm', due: 'Nov 5', type: 'exam' },
+        ],
+      }
+      setCourses(prev => prev.map(c => c.id === tempId ? mockExtracted : c))
+    }, 2500)
+  }
 
   return (
     <div className="dashboard">
@@ -200,9 +202,9 @@ export default function Dashboard() {
 
         <nav className="sidebar-nav">
           {[
-            { id: 'courses', label: 'Courses', icon: '▦' },
+            { id: 'courses',  label: 'Courses',  icon: '▦' },
             { id: 'timeline', label: 'Timeline', icon: '📅' },
-            { id: 'upload', label: 'Upload', icon: '↑' },
+            { id: 'upload',   label: 'Upload',   icon: '↑' },
             { id: 'settings', label: 'Settings', icon: '⚙' },
           ].map(item => (
             <button
@@ -229,30 +231,38 @@ export default function Dashboard() {
 
       <div className="main-content">
         <div className="topbar">
-          <h1>My Courses</h1>
+          <h1>{NAV_TITLES[activeNav]}</h1>
           <button className="add-btn" onClick={() => setActiveNav('upload')}>
             + Add Course
           </button>
         </div>
 
         <div className="content-area">
-          <div className="section-label">
-            Fall 2025 — {courses.length} course{courses.length !== 1 ? 's' : ''}
-          </div>
-
-          <div className="cards-grid">
-            {courses.map(course => (
-                <CourseCard
+          {activeNav === 'courses' && (
+            <>
+              <div className="section-label">
+                Fall 2025 — {courses.length} course{courses.length !== 1 ? 's' : ''}
+              </div>
+              <div className="cards-grid">
+                {courses.map(course => (
+                  <CourseCard
                     key={course.id}
                     course={course}
                     onClick={() => !course.loading && setSelectedCourse(course)}
-                />
-            ))}
-            <UploadZone onFile={handleFile} />
-          </div>
+                  />
+                ))}
+                <UploadZone onFile={handleFile} />
+              </div>
+            </>
+          )}
+
+          {activeNav === 'timeline' && (
+            <Timeline courses={courses} />
+          )}
         </div>
       </div>
-    <CourseModal
+
+      <CourseModal
         course={selectedCourse}
         onClose={() => setSelectedCourse(null)}
       />

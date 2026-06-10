@@ -76,23 +76,23 @@
 }
 
 .tag-exam {
-    background: #fdecea;
-    color: #d82814;
+    background: rgb(243, 24, 24);
+    color: #ffaaaa;
 }
 
 .tag-hw {
-    background: #eaf3de;
-    color: #27500a;
+    background: rgba(57, 244, 57, 0.352);
+    color: #aaeeaa;
 }
 
 .tag-quiz {
-    background: #eeedfe;
-    color: #3c3489;
+    background: rgba(14, 7, 98, 0.296);
+    color: #ccbbff;
 }
 
 .tag-project {
-    background: #faeeda;
-    color: #633806;
+    background: rgba(248, 180, 54, 0.423);
+    color: #ffd580;
 }
 
 .course-card.loading {
