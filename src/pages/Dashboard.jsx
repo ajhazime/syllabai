@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTheme } from '../context/ThemeContext'
+import Settings from '../components/Settings'
 import CourseCard from '../components/CourseCard'
 import UploadZone from '../components/UploadZone'
 import CourseModal from '../components/CourseModal'
@@ -62,14 +64,17 @@ const NAV_TITLES = {
 }
 
 export default function Dashboard() {
-  const [courses, setCourses] = useState(MOCK_COURSES)
-  const [activeNav, setActiveNav] = useState('courses')
-  const [selectedCourse, setSelectedCourse] = useState(null)
-  const canvasRef = useRef(null)
-  const mouseRef = useRef({ x: -999, y: -999 })
-  const particlesRef = useRef([])
-  const frameRef = useRef(null)
-  const navigate = useNavigate()
+    const [courses, setCourses] = useState(MOCK_COURSES)
+    const [activeNav, setActiveNav] = useState('courses')
+    const [selectedCourse, setSelectedCourse] = useState(null)
+    const { theme } = useTheme()
+    const themeRef = useRef(theme)
+        useEffect(() => { themeRef.current = theme }, [theme])
+    const canvasRef = useRef(null)    
+    const mouseRef = useRef({ x: -999, y: -999 })
+    const particlesRef = useRef([])
+    const frameRef = useRef(null)
+    const navigate = useNavigate()
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -134,7 +139,7 @@ export default function Dashboard() {
             ctx.beginPath()
             ctx.moveTo(particles[i].x, particles[i].y)
             ctx.lineTo(particles[j].x, particles[j].y)
-            ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`
+            ctx.strokeStyle = themeRef.current.lineColor.replace('0.3', String(opacity))
             ctx.lineWidth = 0.8
             ctx.stroke()
           }
@@ -144,8 +149,8 @@ export default function Dashboard() {
       particles.forEach(p => {
         ctx.beginPath()
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2)
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)'
-        ctx.fill()
+        ctx.fillStyle = themeRef.current.particleColor
+        ctx.fill() 
       })
 
       frameRef.current = requestAnimationFrame(draw)
@@ -186,7 +191,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="dashboard">
+    <div className="dashboard" style={{ background: theme.gradient }}>
       <canvas ref={canvasRef} className="dashboard-canvas" />
 
       <div className="sidebar">
@@ -232,9 +237,13 @@ export default function Dashboard() {
       <div className="main-content">
         <div className="topbar">
           <h1>{NAV_TITLES[activeNav]}</h1>
-          <button className="add-btn" onClick={() => setActiveNav('upload')}>
+          <button
+            className="add-btn"
+            style={{ background: theme.accent, color: theme.accentText }}
+            onClick={() => setActiveNav('upload')}
+            >
             + Add Course
-          </button>
+        </button>
         </div>
 
         <div className="content-area">
@@ -258,7 +267,10 @@ export default function Dashboard() {
 
           {activeNav === 'timeline' && (
             <Timeline courses={courses} />
-          )}
+            )}
+          {activeNav === 'settings' && (
+            <Settings />
+            )}
         </div>
       </div>
 
