@@ -7,10 +7,10 @@ const TAG_STYLES = {
   project: 'tag-project',
 }
 
-function calcIndividualWeight(totalWeight, assignments, type) {
-  const count = assignments?.filter(a => a.type === type).length || 1
+function calcIndividualWeight(totalWeight, count) {
   const pct = parseFloat(totalWeight) || 0
-  return (pct / count).toFixed(1)
+  const n = count || 1
+  return (pct / n).toFixed(1)
 }
 
 export default function CourseModal({ course, onClose }) {
@@ -36,7 +36,10 @@ export default function CourseModal({ course, onClose }) {
           {/* Instructor */}
           <div className="section">
             <div className="section-title">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c8a800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c8a800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
               Instructor
             </div>
             <div className="info-row"><strong>{course.instructor}</strong></div>
@@ -46,13 +49,27 @@ export default function CourseModal({ course, onClose }) {
             {course.officeHours?.map((oh, i) => (
               <div key={i} className="info-row">{oh}</div>
             ))}
+            {course.lectureTime && (
+              <div className="info-row">
+                <strong style={{ color: 'rgba(255,255,255,0.6)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Lecture</strong>
+                <br />{course.lectureTime}
+              </div>
+            )}
+            {course.discussionSection && (
+              <div className="info-row">
+                <strong style={{ color: 'rgba(255,255,255,0.6)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Discussion</strong>
+                <br />{course.discussionSection}
+              </div>
+            )}
           </div>
 
           {/* Grading scale */}
           {course.gradingScale?.length > 0 && (
             <div className="section">
               <div className="section-title">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c8a800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c8a800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
                 Grading scale
               </div>
               {course.gradingScale.map((g, i) => (
@@ -68,21 +85,17 @@ export default function CourseModal({ course, onClose }) {
           {course.assignmentWeights?.length > 0 && (
             <div className="section full">
               <div className="section-title">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c8a800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c8a800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="3" width="20" height="14" rx="2"/>
+                  <line x1="8" y1="21" x2="16" y2="21"/>
+                  <line x1="12" y1="17" x2="12" y2="21"/>
+                </svg>
                 Assignment weights
               </div>
               {course.assignmentWeights.map((w, i) => {
                 const pct = parseFloat(w.weight) || 0
-                const type = w.name.toLowerCase().includes('exam') ? 'exam'
-                  : w.name.toLowerCase().includes('quiz') ? 'quiz'
-                  : w.name.toLowerCase().includes('project') ? 'project'
-                  : 'hw'
-                const indivWeight = calcIndividualWeight(
-                  w.weight,
-                  course.upcomingAssignments,
-                  type
-                )
-                const count = course.upcomingAssignments?.filter(a => a.type === type).length || 1
+                const count = w.count || 1
+                const indivWeight = calcIndividualWeight(w.weight, count)
 
                 return (
                   <div key={i} className="grade-row">
@@ -91,7 +104,10 @@ export default function CourseModal({ course, onClose }) {
                       <span className="grade-count">{count} total · {indivWeight}% each</span>
                     </div>
                     <div className="grade-bar-bg">
-                      <div className="grade-bar-fill" style={{ width: `${Math.min(pct, 100)}%`, background: course.color }} />
+                      <div
+                        className="grade-bar-fill"
+                        style={{ width: `${Math.min(pct, 100)}%`, background: course.color }}
+                      />
                     </div>
                     <span className="grade-pct">{w.weight}</span>
                   </div>
@@ -101,10 +117,15 @@ export default function CourseModal({ course, onClose }) {
           )}
 
           {/* Exams & deadlines */}
-          {course.examDates?.length > 0 || course.upcomingAssignments?.length > 0 ? (
+          {(course.examDates?.length > 0 || course.upcomingAssignments?.length > 0) && (
             <div className="section full">
               <div className="section-title">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c8a800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c8a800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
                 Exams & deadlines
               </div>
               {course.examDates?.map((e, i) => (
@@ -125,15 +146,19 @@ export default function CourseModal({ course, onClose }) {
                     <div className="exam-meta">Due {a.due}</div>
                   </div>
                   <span className={`exam-badge ${TAG_STYLES[a.type] || 'tag-hw'}`}>
-                    {a.type === 'hw' ? 'HW' : a.type === 'quiz' ? 'Quiz' : a.type === 'project' ? 'Project' : 'Exam'}
+                    {a.type === 'hw' ? 'HW'
+                      : a.type === 'quiz' ? 'Quiz'
+                      : a.type === 'project' ? 'Project'
+                      : 'Exam'}
                   </span>
                 </div>
               ))}
             </div>
-          ) : null}
+          )}
 
         </div>
       </div>
+      
     </div>
   )
 }
